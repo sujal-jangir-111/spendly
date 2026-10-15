@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Terms and Conditions — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="legal-hero">
+    <div class="legal-hero-inner">
+        <div class="hero-badge">Legal</div>
+        <h1 class="legal-title">Terms and <em>Conditions</em></h1>
+        <p class="legal-intro">
+            The ground rules for using Spendly — written plainly, so you know
+            exactly where you stand.
+        </p>
+        <p class="legal-updated">Last updated: October 2026</p>
+
+        <nav class="legal-toc">
+            <a href="#acceptance" class="toc-chip tone-green">Acceptance</a>
+            <a href="#use" class="toc-chip tone-amber">Use of Service</a>
+            <a href="#data" class="toc-chip tone-blue">User Data</a>
+            <a href="#liability" class="toc-chip tone-plum">Liability</a>
+            <a href="#changes" class="toc-chip tone-rose">Changes</a>
+        </nav>
+    </div>
+</section>
+
+<section class="legal-section">
+    <div class="legal-container">
+
+        <article id="acceptance" class="legal-card tone-green">
+            <div class="legal-card-head">
+                <span class="legal-num">01</span>
+                <h2>Acceptance of Terms</h2>
+            </div>
+            <p>
+                By creating an account or using Spendly, you agree to be bound by these
+                Terms and Conditions. If you do not agree with any part of these terms,
+                please do not use the service.
+            </p>
+        </article>
+
+        <article id="use" class="legal-card tone-amber">
+            <div class="legal-card-head">
+                <span class="legal-num">02</span>
+                <h2>Use of Service</h2>
+            </div>
+            <p>
+                Spendly is a personal expense tracking tool intended to help you record
+                and understand your spending. You agree to:
+            </p>
+            <ul>
+                <li>Provide accurate information when registering for an account.</li>
+                <li>Keep your login credentials secure and confidential.</li>
+                <li>Use the service only for lawful, personal purposes.</li>
+                <li>Not attempt to disrupt, misuse, or gain unauthorised access to the service.</li>
+            </ul>
+            <p>
+                We may suspend or terminate accounts that violate these terms.
+            </p>
+        </article>
+
+        <article id="data" class="legal-card tone-blue">
+            <div class="legal-card-head">
+                <span class="legal-num">03</span>
+                <h2>User Data</h2>
+            </div>
+            <p>
+                You retain ownership of the expense data you enter into Spendly. We store
+                this data solely to provide the service to you and do not sell it to third
+                parties. You are responsible for the accuracy of the information you record.
+                You may request deletion of your account and associated data at any time.
+            </p>
+        </article>
+
+        <article id="liability" class="legal-card tone-plum">
+            <div class="legal-card-head">
+                <span class="legal-num">04</span>
+                <h2>Limitations of Liability</h2>
+            </div>
+            <p>
+                Spendly is provided "as is" without warranties of any kind. It is a
+                record-keeping tool and does not offer financial, tax, or investment advice.
+                To the fullest extent permitted by law, Spendly shall not be liable for any
+                financial decisions you make, or for any loss of data, profits, or other
+                damages arising from your use of the service.
+            </p>
+        </article>
+
+        <article id="changes" class="legal-card tone-rose">
+            <div class="legal-card-head">
+                <span class="legal-num">05</span>
+                <h2>Changes to Terms</h2>
+            </div>
+            <p>
+                We may update these Terms and Conditions from time to time. When we do, we
+                will revise the "Last updated" date at the top of this page. Continued use
+                of Spendly after changes are posted means you accept the revised terms.
+            </p>
+        </article>
+
+        <div class="legal-callout">
+            <h3>Ready to start tracking?</h3>
+            <p>Create a free account and take control of every rupee.</p>
+            <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
