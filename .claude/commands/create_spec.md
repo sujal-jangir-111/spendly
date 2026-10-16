@@ -13,12 +13,12 @@ User input: $ARGUMENTS
 Run `git status` and check for uncommitted, unstaged, or
 untracked files. If any exist, stop immediately and tell
 the user to commit or stash changes before proceeding.
-DO NOT CONTINUE until the working directory is clean.
+DO NOT CONTINUE until the working directory is clean. 
 
-## Step 2 — Parse the arguments
+## Step 2 — Parse the arguments  
 From $ARGUMENTS extract:
 
-1. `step_number` — zero-padded to 2 digits: 2 → 02, 11 → 11
+1. `step_number` — zero-padded to 2 digits: 2 → 02, 11 → 11     
 
 2. `feature_title` — human readable title in Title Case
    - Example: "Registration" or "Login and Logout"
@@ -40,7 +40,7 @@ Run `git branch` to list existing branches.
 If `branch_name` is already taken, append a number:
 `feature/registration-01`, `feature/registration-02` etc.
 
-## Step 4 — Switch to main and pull latest
+## Step 4 — Switch to main and pull latest 
 Run:
 ```
 git checkout main
@@ -115,8 +115,8 @@ something that can be verified by running the app.
 
 ## Step 8 — Save the spec
 Save to: `.claude/specs/<step_number>-<feature_slug>.md`
-
-## Step 9 — Report to the user
+   
+## Step 9 — Report to the user  
 Print a short summary in this exact format:
 ```
 Branch:    <branch_name>
