@@ -122,7 +122,48 @@ def privacy():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    # Hardcoded sample data — real queries are wired up in Step 5.
+    name = session.get("user_name", "Demo User")
+    user = {
+        "name": name,
+        "initials": "".join(part[0] for part in name.split()[:2]).upper(),
+        "email": "demo@spendly.com",
+        "member_since": "January 2026",
+    }
+    stats = {
+        "total_spent": "₹3,899.00",
+        "transaction_count": 8,
+        "top_category": "Bills",
+    }
+    transactions = [
+        {"date": "22 Oct 2026", "description": "Lunch out", "category": "Food", "tone": "tone-green", "amount": "₹180.00"},
+        {"date": "18 Oct 2026", "description": "Gift", "category": "Other", "tone": "tone-rose", "amount": "₹200.00"},
+        {"date": "14 Oct 2026", "description": "T-shirt", "category": "Shopping", "tone": "tone-plum", "amount": "₹899.00"},
+        {"date": "11 Oct 2026", "description": "Movie tickets", "category": "Entertainment", "tone": "tone-blue", "amount": "₹300.00"},
+        {"date": "08 Oct 2026", "description": "Pharmacy", "category": "Health", "tone": "tone-rose", "amount": "₹450.00"},
+        {"date": "05 Oct 2026", "description": "Electricity bill", "category": "Bills", "tone": "tone-amber", "amount": "₹1,500.00"},
+        {"date": "03 Oct 2026", "description": "Metro card recharge", "category": "Transport", "tone": "tone-blue", "amount": "₹120.00"},
+        {"date": "01 Oct 2026", "description": "Groceries", "category": "Food", "tone": "tone-green", "amount": "₹250.00"},
+    ]
+    categories = [
+        {"name": "Bills", "tone": "tone-amber", "amount": "₹1,500.00", "pct": 38},
+        {"name": "Shopping", "tone": "tone-plum", "amount": "₹899.00", "pct": 23},
+        {"name": "Food", "tone": "tone-green", "amount": "₹430.00", "pct": 11},
+        {"name": "Health", "tone": "tone-rose", "amount": "₹450.00", "pct": 12},
+        {"name": "Entertainment", "tone": "tone-blue", "amount": "₹300.00", "pct": 8},
+        {"name": "Other", "tone": "tone-rose", "amount": "₹200.00", "pct": 5},
+        {"name": "Transport", "tone": "tone-blue", "amount": "₹120.00", "pct": 3},
+    ]
+    return render_template(
+        "profile.html",
+        user=user,
+        stats=stats,
+        transactions=transactions,
+        categories=categories,
+    )
 
 
 @app.route("/expenses/add")
