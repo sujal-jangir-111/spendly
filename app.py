@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -137,6 +138,10 @@ def profile():
         session.clear()
         return redirect(url_for("login"))
 
+    date_filter = _resolve_date_filter(request.args)
+    date_from = date_filter["date_from"] or None
+    date_to = date_filter["date_to"] or None
+
     user = {
         "name": user_row["name"],
         "initials": "".join(part[0] for part in user_row["name"].split()[:2]).upper(),
@@ -146,9 +151,10 @@ def profile():
     return render_template(
         "profile.html",
         user=user,
-        stats=build_profile_stats(user_id),
-        transactions=build_profile_transactions(user_id),
-        categories=build_profile_categories(user_id),
+        stats=build_profile_stats(user_id, date_from=date_from, date_to=date_to),
+        transactions=build_profile_transactions(user_id, date_from=date_from, date_to=date_to),
+        categories=build_profile_categories(user_id, date_from=date_from, date_to=date_to),
+        date_filter=date_filter,
     )
 
 
@@ -173,29 +179,61 @@ def _format_inr(amount):
     return f"₹{amount:,.2f}"
 
 
+def _parse_date(value):
+    """Return value normalised to YYYY-MM-DD if it is a valid date, else None."""
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
+
+def _resolve_date_filter(args):
+    """Validate the date_from / date_to query params.
+
+    Returns {"date_from", "date_to" ("" when unset), "active", "error"}.
+    An invalid bound is dropped; a reversed range drops both.
+    """
+    raw_from = args.get("date_from", "").strip()
+    raw_to = args.get("date_to", "").strip()
+    date_from = _parse_date(raw_from) if raw_from else None
+    date_to = _parse_date(raw_to) if raw_to else None
+
+    error = None
+    if (raw_from and date_from is None) or (raw_to and date_to is None):
+        error = "Please enter valid dates."
+    elif date_from and date_to and date_from > date_to:
+        error = "Start date must be on or before end date."
+        date_from = date_to = None
+
+    return {
+        "date_from": date_from or "",
+        "date_to": date_to or "",
+        "active": bool(date_from or date_to),
+        "error": error,
+    }
+
+
 # ==== SECTION 1: transaction history (subagent 1) ==================== #
 
-def build_profile_transactions(user_id):
+def build_profile_transactions(user_id, date_from=None, date_to=None):
     """Template-ready rows: date (DD Mon YYYY), description, category, tone, amount."""
-    from datetime import datetime as _dt
-
     return [
         {
-            "date": _dt.strptime(t["date"], "%Y-%m-%d").strftime("%d %b %Y"),
+            "date": datetime.strptime(t["date"], "%Y-%m-%d").strftime("%d %b %Y"),
             "description": t["description"],
             "category": t["category"],
             "tone": CATEGORY_TONES.get(t["category"], DEFAULT_TONE),
             "amount": _format_inr(t["amount"]),
         }
-        for t in get_recent_transactions(user_id)
+        for t in get_recent_transactions(user_id, date_from=date_from, date_to=date_to)
     ]
 
 
 # ==== SECTION 2: summary stats (subagent 2) ========================== #
 
-def build_profile_stats(user_id):
+def build_profile_stats(user_id, date_from=None, date_to=None):
     """Template-ready dict: total_spent (formatted), transaction_count, top_category."""
-    stats = get_summary_stats(user_id)
+    stats = get_summary_stats(user_id, date_from=date_from, date_to=date_to)
     return {
         "total_spent": _format_inr(stats["total_spent"]),
         "transaction_count": int(stats["transaction_count"]),
@@ -205,7 +243,7 @@ def build_profile_stats(user_id):
 
 # ==== SECTION 3: category breakdown (subagent 3) ===================== #
 
-def build_profile_categories(user_id):
+def build_profile_categories(user_id, date_from=None, date_to=None):
     """Template-ready rows: name, tone, amount (formatted), pct."""
     return [
         {
@@ -214,7 +252,7 @@ def build_profile_categories(user_id):
             "amount": _format_inr(c["amount"]),
             "pct": c["pct"],
         }
-        for c in get_category_breakdown(user_id)
+        for c in get_category_breakdown(user_id, date_from=date_from, date_to=date_to)
     ]
 
 
