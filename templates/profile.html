@@ -19,6 +19,24 @@
         <a href="{{ url_for('logout') }}" class="btn-ghost">Log out</a>
     </section>
 
+    <section class="filter-bar" aria-label="Filter by date">
+        <form method="get" action="{{ url_for('profile') }}" class="filter-form">
+            <div class="filter-field">
+                <label for="date_from">From</label>
+                <input type="date" id="date_from" name="date_from" value="{{ date_filter.date_from }}">
+            </div>
+            <div class="filter-field">
+                <label for="date_to">To</label>
+                <input type="date" id="date_to" name="date_to" value="{{ date_filter.date_to }}">
+            </div>
+            <button type="submit" class="btn-primary">Apply</button>
+            <a href="{{ url_for('profile') }}" class="btn-ghost">Clear</a>
+        </form>
+        {% if date_filter.error %}
+        <p class="filter-error" role="alert">{{ date_filter.error }}</p>
+        {% endif %}
+    </section>
+
     <section class="stats-grid" aria-label="Summary">
         <div class="stat-card">
             <span class="stat-label">Total spent</span>
@@ -56,7 +74,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="tx-empty">No expenses yet.</td>
+                        <td colspan="4" class="tx-empty">{% if date_filter.active %}No expenses in this range.{% else %}No expenses yet.{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -12,12 +12,62 @@
 }
 
 .profile-card,
+.filter-bar,
 .stat-card,
 .tx-card,
 .breakdown-card {
     background: var(--paper-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
+}
+
+/* Date filter */
+
+.filter-bar { padding: 1.25rem 2rem; }
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.filter-field label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+}
+
+.filter-field input {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--paper-card);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+}
+
+.filter-field input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.filter-error {
+    margin: 1rem 0 0;
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--radius-sm);
+    background: var(--danger-light);
+    color: var(--danger);
+    font-size: 0.875rem;
 }
 
 /* User card */
