@@ -5,6 +5,12 @@ from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from database.db import get_db, init_db, seed_db
+from database.queries import (
+    get_category_breakdown,
+    get_recent_transactions,
+    get_summary_stats,
+    get_user_by_id,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -125,45 +131,91 @@ def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
 
-    # Hardcoded sample data — real queries are wired up in Step 5.
-    name = session.get("user_name", "Demo User")
+    user_id = session["user_id"]
+    user_row = get_user_by_id(user_id)
+    if user_row is None:
+        session.clear()
+        return redirect(url_for("login"))
+
     user = {
-        "name": name,
-        "initials": "".join(part[0] for part in name.split()[:2]).upper(),
-        "email": "demo@spendly.com",
-        "member_since": "January 2026",
+        "name": user_row["name"],
+        "initials": "".join(part[0] for part in user_row["name"].split()[:2]).upper(),
+        "email": user_row["email"],
+        "member_since": user_row["member_since"],
     }
-    stats = {
-        "total_spent": "₹3,899.00",
-        "transaction_count": 8,
-        "top_category": "Bills",
-    }
-    transactions = [
-        {"date": "22 Oct 2026", "description": "Lunch out", "category": "Food", "tone": "tone-green", "amount": "₹180.00"},
-        {"date": "18 Oct 2026", "description": "Gift", "category": "Other", "tone": "tone-rose", "amount": "₹200.00"},
-        {"date": "14 Oct 2026", "description": "T-shirt", "category": "Shopping", "tone": "tone-plum", "amount": "₹899.00"},
-        {"date": "11 Oct 2026", "description": "Movie tickets", "category": "Entertainment", "tone": "tone-blue", "amount": "₹300.00"},
-        {"date": "08 Oct 2026", "description": "Pharmacy", "category": "Health", "tone": "tone-rose", "amount": "₹450.00"},
-        {"date": "05 Oct 2026", "description": "Electricity bill", "category": "Bills", "tone": "tone-amber", "amount": "₹1,500.00"},
-        {"date": "03 Oct 2026", "description": "Metro card recharge", "category": "Transport", "tone": "tone-blue", "amount": "₹120.00"},
-        {"date": "01 Oct 2026", "description": "Groceries", "category": "Food", "tone": "tone-green", "amount": "₹250.00"},
-    ]
-    categories = [
-        {"name": "Bills", "tone": "tone-amber", "amount": "₹1,500.00", "pct": 38},
-        {"name": "Shopping", "tone": "tone-plum", "amount": "₹899.00", "pct": 23},
-        {"name": "Food", "tone": "tone-green", "amount": "₹430.00", "pct": 11},
-        {"name": "Health", "tone": "tone-rose", "amount": "₹450.00", "pct": 12},
-        {"name": "Entertainment", "tone": "tone-blue", "amount": "₹300.00", "pct": 8},
-        {"name": "Other", "tone": "tone-rose", "amount": "₹200.00", "pct": 5},
-        {"name": "Transport", "tone": "tone-blue", "amount": "₹120.00", "pct": 3},
-    ]
     return render_template(
         "profile.html",
         user=user,
-        stats=stats,
-        transactions=transactions,
-        categories=categories,
+        stats=build_profile_stats(user_id),
+        transactions=build_profile_transactions(user_id),
+        categories=build_profile_categories(user_id),
     )
+
+
+# ------------------------------------------------------------------ #
+# Profile data builders — each section is owned by one subagent.      #
+# Do not edit outside your own section.                               #
+# ------------------------------------------------------------------ #
+
+CATEGORY_TONES = {
+    "Food": "tone-green",
+    "Transport": "tone-blue",
+    "Bills": "tone-amber",
+    "Health": "tone-rose",
+    "Entertainment": "tone-blue",
+    "Shopping": "tone-plum",
+    "Other": "tone-rose",
+}
+DEFAULT_TONE = "tone-rose"
+
+
+def _format_inr(amount):
+    return f"₹{amount:,.2f}"
+
+
+# ==== SECTION 1: transaction history (subagent 1) ==================== #
+
+def build_profile_transactions(user_id):
+    """Template-ready rows: date (DD Mon YYYY), description, category, tone, amount."""
+    from datetime import datetime as _dt
+
+    return [
+        {
+            "date": _dt.strptime(t["date"], "%Y-%m-%d").strftime("%d %b %Y"),
+            "description": t["description"],
+            "category": t["category"],
+            "tone": CATEGORY_TONES.get(t["category"], DEFAULT_TONE),
+            "amount": _format_inr(t["amount"]),
+        }
+        for t in get_recent_transactions(user_id)
+    ]
+
+
+# ==== SECTION 2: summary stats (subagent 2) ========================== #
+
+def build_profile_stats(user_id):
+    """Template-ready dict: total_spent (formatted), transaction_count, top_category."""
+    stats = get_summary_stats(user_id)
+    return {
+        "total_spent": _format_inr(stats["total_spent"]),
+        "transaction_count": int(stats["transaction_count"]),
+        "top_category": stats["top_category"],
+    }
+
+
+# ==== SECTION 3: category breakdown (subagent 3) ===================== #
+
+def build_profile_categories(user_id):
+    """Template-ready rows: name, tone, amount (formatted), pct."""
+    return [
+        {
+            "name": c["name"],
+            "tone": CATEGORY_TONES.get(c["name"], DEFAULT_TONE),
+            "amount": _format_inr(c["amount"]),
+            "pct": c["pct"],
+        }
+        for c in get_category_breakdown(user_id)
+    ]
 
 
 @app.route("/expenses/add")
