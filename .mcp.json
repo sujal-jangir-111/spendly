@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "sqlite": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@executeautomation/database-server",
+        "C:\\Users\\HP\\OneDrive\\Desktop\\expense-tracker\\expense_tracker.db"
+      ]
+    }
+  }
+}

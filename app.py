@@ -1,11 +1,12 @@
+import math
 import os
 import sqlite3
-from datetime import datetime
+from datetime import date, datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database.db import get_db, init_db, seed_db
+from database.db import CATEGORIES, get_db, init_db, seed_db
 from database.queries import (
     get_category_breakdown,
     get_recent_transactions,
@@ -256,9 +257,82 @@ def build_profile_categories(user_id, date_from=None, date_to=None):
     ]
 
 
-@app.route("/expenses/add")
+@app.route("/analytics")
+def analytics():
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+    return render_template("analytics.html")
+
+
+def _validate_expense_form(form):
+    """Return (clean_values, error). clean_values is None when error is set."""
+    raw_amount = form.get("amount", "").strip()
+    category = form.get("category", "")
+    raw_date = form.get("date", "").strip()
+    description = form.get("description", "").strip()
+
+    try:
+        amount = float(raw_amount)
+    except ValueError:
+        return None, "Please enter a valid amount."
+    if not math.isfinite(amount) or amount <= 0:
+        return None, "Amount must be greater than 0."
+    if category not in CATEGORIES:
+        return None, "Please choose a valid category."
+    expense_date = _parse_date(raw_date) if raw_date else None
+    if expense_date is None:
+        return None, "Please enter a valid date."
+    if expense_date > date.today().isoformat():
+        return None, "Date cannot be in the future."
+    if len(description) > 200:
+        return None, "Description must be 200 characters or fewer."
+
+    return {
+        "amount": round(amount, 2),
+        "category": category,
+        "date": expense_date,
+        "description": description,
+    }, None
+
+
+@app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
-    return "Add expense — coming in Step 7"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    if request.method == "GET":
+        return render_template(
+            "add_expense.html",
+            categories=CATEGORIES,
+            form={"date": date.today().isoformat()},
+        )
+
+    values, error = _validate_expense_form(request.form)
+    if error:
+        return render_template(
+            "add_expense.html",
+            categories=CATEGORIES,
+            form=request.form,
+            error=error,
+        )
+
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO expenses (user_id, amount, category, date, description) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (
+                session["user_id"],
+                values["amount"],
+                values["category"],
+                values["date"],
+                values["description"],
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")
