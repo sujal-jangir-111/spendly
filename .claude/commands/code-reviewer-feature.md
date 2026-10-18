@@ -1,7 +1,7 @@
 ---
 description: Runs parallel security and quality code 
   review for a specific Spendly feature. Pass the spec 
-  name as argument e.g. /code-review-feature 03-login
+  name as argument e.g. /code-review-feature 03-login  
 allowed-tools: Bash(git diff), Bash(git diff --staged)
 ---
 
